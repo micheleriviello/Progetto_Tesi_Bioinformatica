@@ -348,4 +348,4 @@ while cont < len(sovrapposizioni_regione):
     cont = cont + 1
 f1 = open('sequenze_sovrapposizioni_allineate.fna')
 sovrapposizioni_allineate = f1.read()
-print (sovrapposizioni_allineate)x\
+print (sovrapposizioni_allineate)
