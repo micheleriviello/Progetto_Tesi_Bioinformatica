@@ -3,16 +3,13 @@ import random as random
 import re
 import multiprocessing
 import concurrent.futures
+from ClasseRisultato import RisultatoCalcoloMatch
+import time
 NUMERO_CORE = multiprocessing.cpu_count()
 NUM_BP_FINESTRA = 1000
 NUM_SEQUENZE = 5
 NUM_BASI_MER = 12
 PERCENTUALE = 0.1
-
-class RisultatoCalcoloMatch:
-    matches = []
-    num_matches = 0
-    frequenza_dist = {}
 
 def match_pattern(app1, app2, distanza_frequente):
     if app1 == app2:
@@ -64,7 +61,7 @@ if __name__ == "__main__":
     j = NUM_BP_FINESTRA
     finestra = []
     finestre_mers = []
-
+    start = time.time()
     #suddivisione del cromosoma in finestre da 1kbp = 1000 basi azotate
     while j <= len(cromosoma):
         finestra.append(cromosoma[i:j])
@@ -77,6 +74,10 @@ if __name__ == "__main__":
             j = len(cromosoma)
     cont = 0
     del cromosoma
+    ft = open('filetempi.txt', 'w')
+    end = time.time()
+    ft.write("Tempo suddivisione finestre: " + str(end-start) + "\n")
+    start = time.time()
     # suddivisione delle finestre in 12-mers
     while cont < len(finestra):
         i = 0
@@ -99,7 +100,9 @@ if __name__ == "__main__":
     cont = 0
     matches = []
     matches_finestra = []
-
+    end = time.time()
+    ft.write("Tempo suddivisione finestre in 12-mers: " + str(end-start) + "\n")
+    start = time.time()
     #calcolo matches dei mers per ogni finestra
     while cont < len(finestra):
         cont_matches = 0
@@ -118,7 +121,9 @@ if __name__ == "__main__":
             j = i + 1
         matches_finestra.append(cont_matches)
         cont = cont + 1
-
+    end = time.time()
+    ft.write("Tempo matches finestre: " + str(end-start) + "\n")
+    start = time.time()
     #ricalcolo finestre in base al numero di mathces
     cont = 0
     pos = []
@@ -153,6 +158,8 @@ if __name__ == "__main__":
             break
     nuove_finestre.append(n_finestra)
     print(nuove_finestre)
+    end = time.time()
+    ft.write("Tempo ricalcolo finestre: " + str(end-start) + "\n")
     del mers
     del finestre_mers
     del finestra
@@ -164,6 +171,7 @@ if __name__ == "__main__":
     cont_matches = 0
     executor = concurrent.futures.ProcessPoolExecutor()
     while cont < len(nuove_finestre):
+        start = time.time()
         cont_matches = 0
         irange = NUMERO_CORE
         i = range(0,irange)
@@ -192,6 +200,8 @@ if __name__ == "__main__":
                         diz_dis_freq[chiave] = f.result().frequenza_dist[chiave]
                     else:
                         diz_dis_freq[chiave] = diz_dis_freq[chiave] + f.result().frequenza_dist[chiave]
+        end = time.time()
+        ft.write("Tempo calcolo distanze match finestra " + str(cont+1) + ": " + str(end-start) + "\n")
         cont = cont + 1
 
     #creazione istogramma similarita' media di ciscuna finestra
@@ -228,7 +238,7 @@ if __name__ == "__main__":
         sequenze_regioni.append(sequenze)
         cont = cont + 1
     print("Sequenze generate", sequenze_regioni)
-
+    start = time.time()
     #match delle sequenze generate con la regione di interesse
     cont = 0
     pos_in = []
@@ -250,11 +260,13 @@ if __name__ == "__main__":
         posizioni_iniziali_match.append(pos_in)
         posizioni_finali_match.append(pos_fin)
         cont = cont + 1
-
+    end = time.time()
+    ft.write("Tempo match tra sequenze e regioni di interesse: " + str(end-start) + "\n")
     #individuazione e gestione delle sovrapposizioni
     cont = 0
 
     while cont < len(nuove_finestre):
+        start = time.time()
         match = []
         f1 = open('sequenze_allineate'+str(cont+1)+'.fna', "w")
         i = 0
@@ -304,4 +316,6 @@ if __name__ == "__main__":
             k = k + 1
         f1.close()
         del match
+        end = time.time()
+        ft.write("Tempo individuazione e gestione overlap per finestra " + str(cont+1) + ": " + str(end-start) + "\n")
         cont = cont + 1
